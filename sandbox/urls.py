@@ -11,9 +11,15 @@ from oscar.views import handler403, handler404, handler500
 from apps.gateway import urls as gateway_urls
 from apps.sitemaps import base_sitemaps
 
+from oscarapi.app import application as api
+
+
 admin.autodiscover()
 
 urlpatterns = [
+    # API
+    url(r'^api/', api.urls),
+
     # Include admin as convenience. It's unsupported and only included
     # for developers.
     url(r'^admin/', admin.site.urls),

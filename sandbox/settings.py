@@ -1,6 +1,8 @@
 import os
 import environ
 import oscar
+from django.utils.translation import gettext_lazy as _
+from oscar.defaults import *
 
 env = environ.Env()
 
@@ -11,8 +13,6 @@ location = lambda x: os.path.join(
 DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = [
-    'latest.oscarcommerce.com',
-    'master.oscarcommerce.com',
     'localhost',
     '127.0.0.1',
 ]
@@ -125,6 +125,7 @@ TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
         'DIRS': [
+            os.path.join(location('apps'), 'dashboard'),
             location('templates'),
             oscar.OSCAR_MAIN_TEMPLATE_DIR,
         ],
@@ -276,7 +277,9 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'apps.gateway',     # For allowing dashboard access
     'widget_tweaks',
-] + oscar.get_core_apps()
+    'rest_framework',
+    'oscarapi'
+] + oscar.get_core_apps(['apps.dashboard.catalogue', 'apps.catalogue'])
 
 # Add Oscar's custom auth backend so users can sign in using their email
 # address.
@@ -357,18 +360,22 @@ OSCAR_INITIAL_LINE_STATUS = 'Pending'
 
 # This dict defines the new order statuses than an order can move to
 OSCAR_ORDER_STATUS_PIPELINE = {
-    'Pending': ('Being processed', 'Cancelled',),
-    'Being processed': ('Complete', 'Cancelled',),
+    'Pending': ('Being processed', 'Cancelled', 'Failed'),
+    'Being processed': ('Complete', 'Cancelled', 'Waiting for user input', 'Failed'),
+    'Waiting for user input': ('Complete', 'Cancelled', 'Failed'),
     'Cancelled': (),
     'Complete': (),
+    'Failed': (),
 }
 
 # This dict defines the line statuses that will be set when an order's status
 # is changed
 OSCAR_ORDER_STATUS_CASCADE = {
     'Being processed': 'Being processed',
+    'Waiting for user input': 'Waiting for user input',
     'Cancelled': 'Cancelled',
-    'Complete': 'Shipped',
+    'Complete': 'Complete',
+    'Failed': 'Failed',
 }
 
 # LESS/CSS
@@ -415,3 +422,140 @@ try:
     from settings_local import *
 except ImportError:
     pass
+
+# Override defaults to add the options management to the dashboard
+OSCAR_DASHBOARD_NAVIGATION = [
+    {
+        'label': _('Dashboard'),
+        'icon': 'icon-th-list',
+        'url_name': 'dashboard:index',
+    },
+    {
+        'label': _('Catalogue'),
+        'icon': 'icon-sitemap',
+        'children': [
+            {
+                'label': _('Products'),
+                'url_name': 'dashboard:catalogue-product-list',
+            },
+            {
+                'label': _('Product Types'),
+                'url_name': 'dashboard:catalogue-class-list',
+            },
+            {
+                'label': _('Categories'),
+                'url_name': 'dashboard:catalogue-category-list',
+            },
+            {
+                'label': _('Ranges'),
+                'url_name': 'dashboard:range-list',
+            },
+            {
+                'label': _('Low stock alerts'),
+                'url_name': 'dashboard:stock-alert-list',
+            },
+            {
+                'label': _('Options'),
+                'url_name': 'dashboard:catalogue-option-list',
+            },
+        ]
+    },
+    {
+        'label': _('Fulfilment'),
+        'icon': 'icon-shopping-cart',
+        'children': [
+            {
+                'label': _('Orders'),
+                'url_name': 'dashboard:order-list',
+            },
+            {
+                'label': _('Statistics'),
+                'url_name': 'dashboard:order-stats',
+            },
+            {
+                'label': _('Partners'),
+                'url_name': 'dashboard:partner-list',
+            },
+            # The shipping method dashboard is disabled by default as it might
+            # be confusing. Weight-based shipping methods aren't hooked into
+            # the shipping repository by default (as it would make
+            # customising the repository slightly more difficult).
+            # {
+            #     'label': _('Shipping charges'),
+            #     'url_name': 'dashboard:shipping-method-list',
+            # },
+        ]
+    },
+    {
+        'label': _('Customers'),
+        'icon': 'icon-group',
+        'children': [
+            {
+                'label': _('Customers'),
+                'url_name': 'dashboard:users-index',
+            },
+            {
+                'label': _('Stock alert requests'),
+                'url_name': 'dashboard:user-alert-list',
+            },
+        ]
+    },
+    {
+        'label': _('Offers'),
+        'icon': 'icon-bullhorn',
+        'children': [
+            {
+                'label': _('Offers'),
+                'url_name': 'dashboard:offer-list',
+            },
+            {
+                'label': _('Vouchers'),
+                'url_name': 'dashboard:voucher-list',
+            },
+            {
+                'label': _('Voucher Sets'),
+                'url_name': 'dashboard:voucher-set-list',
+            },
+
+        ],
+    },
+    {
+        'label': _('Content'),
+        'icon': 'icon-folder-close',
+        'children': [
+            {
+                'label': _('Content blocks'),
+                'url_name': 'dashboard:promotion-list',
+            },
+            {
+                'label': _('Content blocks by page'),
+                'url_name': 'dashboard:promotion-list-by-page',
+            },
+            {
+                'label': _('Pages'),
+                'url_name': 'dashboard:page-list',
+            },
+            {
+                'label': _('Email templates'),
+                'url_name': 'dashboard:comms-list',
+            },
+            {
+                'label': _('Reviews'),
+                'url_name': 'dashboard:reviews-list',
+            },
+        ]
+    },
+    {
+        'label': _('Reports'),
+        'icon': 'icon-bar-chart',
+        'url_name': 'dashboard:reports-index',
+    },
+]
+
+OSCARAPI_ORDER_FIELD =(
+            'id', 'number', 'basket', 'url', 'lines',
+            'owner', 'billing_address', 'currency', 'total_incl_tax',
+            'total_excl_tax', 'shipping_incl_tax', 'shipping_excl_tax',
+            'shipping_address', 'shipping_method', 'shipping_code', 'status',
+            'guest_email', 'date_placed', 'payment_url', 'offer_discounts',
+            'voucher_discounts')
