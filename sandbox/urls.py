@@ -11,7 +11,8 @@ from oscar.views import handler403, handler404, handler500
 from apps.gateway import urls as gateway_urls
 from apps.sitemaps import base_sitemaps
 
-from oscarapi.app import application as api
+#from oscarapi.app import application as api
+from apps.oscarapi.app import application as api
 
 
 admin.autodiscover()

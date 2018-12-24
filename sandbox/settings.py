@@ -92,7 +92,7 @@ SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
-USE_I18N = True
+USE_I18N = False
 
 # If you set this to False, Django will not format dates, numbers and
 # calendars according to the current locale
@@ -278,8 +278,13 @@ INSTALLED_APPS = [
     'apps.gateway',     # For allowing dashboard access
     'widget_tweaks',
     'rest_framework',
-    'oscarapi'
-] + oscar.get_core_apps(['apps.dashboard.catalogue', 'apps.catalogue'])
+    'oscarapi',
+] + oscar.get_core_apps([
+    'apps.order',
+    'apps.dashboard.catalogue',
+    'apps.catalogue',
+    'apps.basket'
+])
 
 # Add Oscar's custom auth backend so users can sign in using their email
 # address.
