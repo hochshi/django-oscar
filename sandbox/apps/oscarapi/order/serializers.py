@@ -1,7 +1,10 @@
 from oscar.core.loading import get_model
 from oscarapi.serializers import OrderLineSerializer as OLS
 from oscarapi.serializers import OrderLineAttributeSerializer as OLAS
+from oscarapi.serializers import OrderSerializer as OS
+from dynamic_rest.serializers import WithDynamicModelSerializerMixin
 from rest_framework import exceptions, serializers
+
 
 Order = get_model('order', 'Order')
 OrderLine = get_model('order', 'Line')
@@ -29,3 +32,8 @@ class OrderLineAttributeSerializer(OLAS):
 class OrderLineSerializer(OLS):
     attributes = OrderLineAttributeSerializer(
         many=True, fields=('url', 'option', 'value', 'type'), required=False)
+
+
+class OrderSerializer(WithDynamicModelSerializerMixin, OS):
+    class Meta(OS.Meta):
+        name = 'orders'
